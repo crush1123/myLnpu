@@ -1,0 +1,19 @@
+server:
+  port: 7300
+spring:
+  application:
+    name: MyLNPU
+  redis:
+    host: localhost
+    port: 6379
+    password: root
+    database: 0
+  cache:
+    redis:
+      time-to-live:  -1 #设置缓存数据的过期时间
+#    type: com.alibaba.druid.pool.DruidDataSource  # 使用 DruidDataSource作为数据源
+#  druid:
+#    initialSize: 5 #初始化连接大小
+#    minIdle: 5     #最小连接池数量
+#    maxActive: 20  #最大连接池数量
+#    maxWait: 60000 #获取连接时最大等待时间，单位毫秒

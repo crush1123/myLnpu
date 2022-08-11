@@ -1,0 +1,8 @@
+{
+  "properties": [
+    {
+      "name": "spring.druid.initialSize",
+      "type": "java.lang.String",
+      "description": "Description for spring.druid.initialSize."
+  }
+] }
