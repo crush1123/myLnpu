@@ -5,6 +5,7 @@ import com.MyLNPU.model.jwxt.CourseModel;
 import com.MyLNPU.model.responseModel.Data;
 import com.MyLNPU.model.responseModel.Response;
 import com.MyLNPU.utils.Parse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -15,8 +16,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
+@Slf4j
 @Service
 public class TableService {
     public Response getTable(String cookie) throws Exception {
@@ -31,6 +36,7 @@ public class TableService {
         Elements elements = document.select(".Nsb_table tr");
         if (elements.size() == 0) {
             client.close();
+            log.info("当前cookie已失效");
             throw new CookieException("当前Cookie已失效");
         }
         elements.remove(0);
@@ -45,43 +51,34 @@ public class TableService {
             for (int j = 0; j < courses.size(); j++) {
                 int week = j + 1;
                 Element course = courses.get(j);
-                if (!course.ownText().equals("")) {
+                if (!course.ownText().equals("")){
                     Elements properties = course.children();
-                    Set<String> set = new LinkedHashSet<>();
-                    String[] name = course.ownText().split(" ");
-                    for (String s : name) {
-                        set.add(s);
-                    }
-                    Object[] array = set.toArray();
+                    int count = (properties.size()-properties.select("br").size()-properties.select("span").size()+1)/3;
+                    String[] courseName = course.ownText().split(" ");
                     Elements teacher_title = properties.select("[title='老师']");
                     Elements weekTime_title = properties.select("[title='周次(节次)']");
-                    String[] weekTime=weekTime_title.text().split(" ");
-                    System.out.println(weekTime.length);
                     Elements address_title = properties.select("[title='教室']");
-                    CourseModel courseModel = new CourseModel();
-                    courseModel.setCourseName(array[0].toString());
-                    courseModel.setWeek(week);
-                    courseModel.setSections(sections);
-                    List<Integer> lists=new ArrayList<>();
-                    for (int k = 0; k < weekTime.length; k++) {
+                    for (int k = 0; k < count; k++) {
+                        CourseModel courseModel = new CourseModel();
+                        courseModel.setCourseName(courseName[k==0?k:(2*k-1)]);
                         if (address_title.size() != 0) {
                             courseModel.setAddress(address_title.get(k).text());
                         }
                         if (teacher_title.size() != 0) {
                             courseModel.setTeacherName(teacher_title.get(k).text());
                         }
-                        List<Integer> list = Parse.parseToArray(weekTime_title.get(k).text());
-                        lists.addAll(list);
+                        courseModel.setWeekTimes(Parse.parseToArray(weekTime_title.get(k).text()));
+                        courseModel.setWeek(week);
+                        courseModel.setSections(sections);
+                        courseList.add(courseModel);
                     }
-                    Collections.sort(lists);
-                    courseModel.setWeekTimes(lists);
-                    courseList.add(courseModel);
                 }
             }
         }
         client.close();
-        System.out.println(courseList);
+        log.info(courseList.toString());
         data.setTable(courseList);
+        log.info("获取课表信息成功");
         return new Response(1, "获取课表信息成功", data);
     }
 }
